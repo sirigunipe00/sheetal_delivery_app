@@ -315,7 +315,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
           ),
-          if (mine && order.status != 'delivered') ...[
+          // After pickup (out_for_delivery), partner cannot cancel / release.
+          if (mine && order.status == 'preparing') ...[
             const SizedBox(height: 12),
             TextButton(
               onPressed: session.acting

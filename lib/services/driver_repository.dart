@@ -312,6 +312,25 @@ class DriverRepository {
     }
   }
 
+  /// Order IDs this partner already rejected (must not reappear on Home).
+  Future<Set<String>> fetchRejectedOrderIds(String driverId) async {
+    try {
+      final rows = await _db
+          .from('driver_order_alerts')
+          .select('order_id')
+          .eq('driver_id', driverId)
+          .eq('status', 'rejected');
+      final out = <String>{};
+      for (final row in rows) {
+        final id = row['order_id']?.toString();
+        if (id != null && id.isNotEmpty) out.add(id);
+      }
+      return out;
+    } catch (_) {
+      return {};
+    }
+  }
+
   Future<DeliveryStore> fetchStore() async {
     try {
       final row =

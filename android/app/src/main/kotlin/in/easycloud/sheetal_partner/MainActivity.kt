@@ -38,17 +38,18 @@ class MainActivity : FlutterActivity() {
             lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
         }
 
-        val normal = NotificationChannel(
+        // Mute legacy FCM channel so only our Accept/Reject local notification shows.
+        val legacy = NotificationChannel(
             "delivery_offers",
-            "Delivery offers",
-            NotificationManager.IMPORTANCE_HIGH,
+            "Delivery offers (legacy)",
+            NotificationManager.IMPORTANCE_NONE,
         ).apply {
-            description = "New nearby Sheetal delivery requests"
-            enableVibration(true)
-            setSound(alarmUri, alarmAttrs)
+            description = "Muted — use Delivery offers (alert) instead"
+            enableVibration(false)
+            setSound(null, null)
         }
 
         manager.createNotificationChannel(alert)
-        manager.createNotificationChannel(normal)
+        manager.createNotificationChannel(legacy)
     }
 }

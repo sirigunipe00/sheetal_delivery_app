@@ -32,6 +32,7 @@ class OfferAlertService {
   bool _ready = false;
   Timer? _ringTimer;
   bool _ringing = false;
+  int _lastNotifId = _notifId;
 
   Future<void> init({OfferNotifHandler? handler}) async {
     onEvent = handler ?? onEvent;
@@ -79,7 +80,7 @@ class OfferAlertService {
     return _eventFrom(details!.notificationResponse);
   }
 
-  /// Lock screen / background: system notification with Accept / Reject.
+  /// Lock screen / background: single system notification with Accept / Reject.
   Future<void> showLockScreenOffer({
     required DeliveryOrder order,
     required DeliveryStore store,
@@ -88,14 +89,27 @@ class OfferAlertService {
     String? tripDistanceKm,
   }) async {
     if (!_ready) await init();
-    final title = 'New Sheetal delivery · ₹${order.total.round()}';
+    final amount = order.total.round();
+    final customer = order.customerName.trim().isEmpty
+        ? 'Customer'
+        : order.customerName.trim();
+    final title = amount > 0
+        ? 'New Sheetal delivery · ₹$amount'
+        : 'New Sheetal delivery';
+    final distanceLine = [
+      if (distanceToStoreKm != null && distanceToStoreKm.isNotEmpty)
+        'Store $distanceToStoreKm',
+      if (distanceToCustomerKm != null && distanceToCustomerKm.isNotEmpty)
+        'Customer $distanceToCustomerKm',
+      if (tripDistanceKm != null && tripDistanceKm.isNotEmpty)
+        'Trip $tripDistanceKm',
+    ].join(' · ');
     final body = [
       'Pickup: ${store.name}',
-      if (distanceToStoreKm != null) 'To store: $distanceToStoreKm',
-      'Drop: ${order.customerName}',
+      'Drop: $customer',
       if (order.address.isNotEmpty) order.address,
-      if (distanceToCustomerKm != null) 'To customer: $distanceToCustomerKm',
-      if (tripDistanceKm != null) 'Total trip: $tripDistanceKm',
+      if (amount > 0) 'Amount: ₹$amount · ${order.paymentLabel}',
+      if (distanceLine.isNotEmpty) distanceLine,
     ].join('\n');
 
     final android = AndroidNotificationDetails(
@@ -112,10 +126,11 @@ class OfferAlertService {
       vibrationPattern: Int64List.fromList([0, 600, 400, 600, 400, 800]),
       audioAttributesUsage: AudioAttributesUsage.alarm,
       ticker: 'New delivery offer',
+      onlyAlertOnce: true,
       styleInformation: BigTextStyleInformation(
         body,
         contentTitle: title,
-        summaryText: '#${order.orderNumber}',
+        summaryText: order.orderNumber.isEmpty ? null : '#${order.orderNumber}',
       ),
       actions: const [
         AndroidNotificationAction(
@@ -133,8 +148,13 @@ class OfferAlertService {
       ],
     );
 
+    // Stable id per order so duplicates replace instead of stacking.
+    final notifId = (order.id.hashCode & 0x7fffffff);
+    _lastNotifId = notifId == 0 ? _notifId : notifId;
+    await _plugin.cancel(_notifId);
+    await _plugin.cancel(_lastNotifId);
     await _plugin.show(
-      _notifId,
+      _lastNotifId,
       title,
       body,
       NotificationDetails(
@@ -150,7 +170,10 @@ class OfferAlertService {
     );
   }
 
-  Future<void> cancelOfferNotification() => _plugin.cancel(_notifId);
+  Future<void> cancelOfferNotification() async {
+    await _plugin.cancel(_lastNotifId);
+    await _plugin.cancel(_notifId);
+  }
 
   /// Foreground: loop ringtone until accept/reject.
   Future<void> startForegroundRing() async {

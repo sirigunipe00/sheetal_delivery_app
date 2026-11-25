@@ -383,12 +383,14 @@ class _RequestCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order)),
-                    );
-                  },
-                  child: const Text('Details'),
+                  onPressed: session.acting
+                      ? null
+                      : () => session.dismissIncoming(orderId: order.id),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: const BorderSide(color: Color(0xFFDC2626)),
+                  ),
+                  child: const Text('Reject'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -400,6 +402,14 @@ class _RequestCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order)),
+              );
+            },
+            child: const Text('View details'),
           ),
         ],
       ),

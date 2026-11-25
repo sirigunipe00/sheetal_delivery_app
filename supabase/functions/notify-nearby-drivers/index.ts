@@ -161,9 +161,10 @@ Deno.serve(async (req) => {
             body: bodyText,
             order_id: orderId,
             order_number: String(order.order_number ?? ""),
-            total: String(order.total ?? ""),
+            // FCM data values must be strings; send a clean integer amount.
+            total: String(Math.round(Number(order.total ?? 0))),
             payment_method: String(order.payment_method ?? "cod"),
-            customer_name: String(order.customer_name ?? ""),
+            customer_name: String(order.customer_name ?? "Customer"),
             customer_phone: String(order.customer_phone ?? ""),
             delivery_address: String(order.delivery_address ?? ""),
             delivery_lat: String(order.delivery_lat ?? ""),
@@ -179,6 +180,8 @@ Deno.serve(async (req) => {
           },
           android: {
             priority: "HIGH",
+            // Data-only: no `notification` block — app shows the single Accept/Reject alert.
+            collapseKey: `offer_${orderId}`,
           },
           apns: {
             headers: {

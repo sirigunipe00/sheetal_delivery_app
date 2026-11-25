@@ -40,6 +40,7 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
 
   final List<DeliveryOrder> _queue = [];
   final Set<String> _notified = {};
+  final Set<String> _rejectedIds = {};
   RealtimeChannel? _channel;
   StreamSubscription<Position>? _positionSub;
   bool _listening = false;
@@ -408,27 +409,35 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  /// Cancel / ignore this offer for the current partner.
+  /// Cancel / ignore this offer for the current partner (never show again).
   Future<void> dismissIncoming({String? orderId}) async {
     final id = orderId ?? incoming?.id;
     if (id != null) {
-      unawaited(_repo.rejectOffer(id));
+      _rejectedIds.add(id);
+      _notified.remove(id);
       available = available.where((order) => order.id != id).toList();
       _queue.removeWhere((order) => order.id == id);
       if (incoming?.id == id) {
         incoming = null;
         incomingStore = null;
       }
+      await OfferAlertService.instance.stopForegroundRing();
+      await OfferAlertService.instance.cancelOfferNotification();
+      try {
+        await _repo.rejectOffer(id);
+      } catch (_) {}
     } else {
       incoming = null;
       incomingStore = null;
-    }
-    if (incoming == null && _queue.isNotEmpty) {
-      incoming = _queue.removeAt(0);
-      unawaited(_prepareIncoming(incoming!));
-    } else {
       await OfferAlertService.instance.stopForegroundRing();
       await OfferAlertService.instance.cancelOfferNotification();
+    }
+    if (incoming == null && _queue.isNotEmpty) {
+      final next = _queue.removeAt(0);
+      if (!_rejectedIds.contains(next.id) && next.isFreshOffer) {
+        incoming = next;
+        unawaited(_prepareIncoming(incoming!));
+      }
     }
     notifyListeners();
   }
@@ -469,16 +478,16 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Handles Accept / Reject / Open from lock-screen notification actions.
   Future<void> handleNotificationAction(OfferNotifEvent event) async {
-    await handlePushOffer(event.orderId, forceShow: true);
     if (event.action == OfferNotifAction.reject) {
       await dismissIncoming(orderId: event.orderId);
       return;
     }
+    await handlePushOffer(event.orderId, forceShow: true);
     if (event.action == OfferNotifAction.accept) {
       final order = incoming?.id == event.orderId
           ? incoming!
           : await _repo.fetchOrder(event.orderId);
-      if (order == null) return;
+      if (order == null || _rejectedIds.contains(event.orderId)) return;
       final failure = await accept(order);
       if (failure == null) {
         pendingOpenActiveDelivery = true;
@@ -553,9 +562,16 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
     if (profile == null) return;
     if (!isOnline && !forceShow) return;
 
+    if (_rejectedIds.contains(orderId)) {
+      if (incoming?.id == orderId) {
+        incoming = null;
+        notifyListeners();
+      }
+      return;
+    }
     final order = await _repo.fetchOrder(orderId);
-    if (order == null || !order.isAvailable) {
-      // Already taken — drop any stale overlay for this order.
+    if (order == null || !order.isFreshOffer) {
+      // Already taken or too old — drop any stale overlay for this order.
       if (incoming?.id == orderId) {
         incoming = null;
         notifyListeners();
@@ -598,9 +614,14 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
     final id = profile?.id;
     if (id == null) return;
     final placed = await _repo.fetchPlaced();
+    final rejected = await _repo.fetchRejectedOrderIds(id);
+    _rejectedIds.addAll(rejected);
     final activeRows = await _repo.fetchActive(id);
     final past = await _repo.fetchHistory(id);
-    available = [for (final order in placed) if (order.isAvailable) order];
+    available = [
+      for (final order in placed)
+        if (order.isFreshOffer && !_rejectedIds.contains(order.id)) order,
+    ];
     active = activeRows.isEmpty ? null : activeRows.first;
     history = past;
     _dropStaleIncoming();
@@ -679,7 +700,8 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _onNewOrder(DeliveryOrder order) async {
-    if (!_listening || !order.isAvailable) return;
+    if (!_listening || !order.isFreshOffer) return;
+    if (_rejectedIds.contains(order.id)) return;
     if (!_notified.add(order.id)) return;
     if (!available.any((item) => item.id == order.id)) {
       available = [order, ...available];

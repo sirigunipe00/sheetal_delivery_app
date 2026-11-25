@@ -24,17 +24,19 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     if (orderId == null || orderId.isEmpty) return;
 
     // Prefer rich data from the push payload (no auth needed in background).
+    final total = _asInt(data['total']);
+    final customer = _nonEmpty(data['customer_name']) ?? 'Customer';
     final order = DeliveryOrder(
       id: orderId,
       orderNumber: data['order_number']?.toString() ?? '',
       status: 'placed',
       paymentMethod: data['payment_method']?.toString() ?? 'cod',
       paymentStatus: 'pending',
-      subtotal: _asInt(data['total']),
+      subtotal: total,
       deliveryFee: 0,
       handlingFee: 0,
-      total: _asInt(data['total']),
-      customerName: data['customer_name']?.toString() ?? 'Customer',
+      total: total,
+      customerName: customer,
       customerPhone: data['customer_phone']?.toString() ?? '',
       address: data['delivery_address']?.toString() ?? '',
       addressLabel: 'Home',
