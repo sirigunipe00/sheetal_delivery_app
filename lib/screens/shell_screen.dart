@@ -71,8 +71,6 @@ class _ShellScreenState extends State<ShellScreen> {
             body: pages[_index],
             bottomNavigationBar: NavigationBar(
               selectedIndex: _index,
-              backgroundColor: Colors.white,
-              indicatorColor: const Color(0xFFFFE3F0),
               onDestinationSelected: (index) => setState(() => _index = index),
               destinations: const [
                 NavigationDestination(

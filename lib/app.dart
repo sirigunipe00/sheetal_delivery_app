@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sheetal_driver_app/core/app_colors.dart';
+import 'package:sheetal_driver_app/core/app_theme.dart';
 import 'package:sheetal_driver_app/screens/auth_screen.dart';
 import 'package:sheetal_driver_app/screens/shell_screen.dart';
 import 'package:sheetal_driver_app/screens/verification_status_screen.dart';
@@ -17,17 +18,9 @@ class SheetalDriverApp extends StatelessWidget {
     return DriverScope(
       session: session,
       child: MaterialApp(
-        title: 'Sheetal Partner',
+        title: 'Sheetal DeliveryPartner',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          scaffoldBackgroundColor: AppColors.page,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.primary,
-            primary: AppColors.primary,
-          ),
-          snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
-        ),
+        theme: AppTheme.light(),
         home: const RootScreen(),
       ),
     );
@@ -56,27 +49,31 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AnnotatedRegion<SystemUiOverlayStyle>(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: AppColors.plum,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.two_wheeler, color: Colors.white, size: 64),
-              SizedBox(height: 16),
-              Text(
-                'Sheetal Partner',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
+        body: Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(gradient: AppColors.headerGradient),
+          child: const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.two_wheeler, color: Colors.white, size: 64),
+                SizedBox(height: 16),
+                Text(
+                  'Sheetal Delivery Partner',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'DM Sans',
+                  ),
                 ),
-              ),
-              SizedBox(height: 20),
-              CircularProgressIndicator(color: Colors.white),
-            ],
+                SizedBox(height: 20),
+                CircularProgressIndicator(color: Colors.white),
+              ],
+            ),
           ),
         ),
       ),

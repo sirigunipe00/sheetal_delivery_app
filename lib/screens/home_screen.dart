@@ -19,11 +19,7 @@ class HomeScreen extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.fromLTRB(20, MediaQuery.paddingOf(context).top + 18, 20, 22),
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.plum, Color(0xFF7A2468)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: AppColors.headerGradient,
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
           ),
           child: Column(
@@ -310,7 +306,7 @@ class _ActiveCard extends StatelessWidget {
               );
             },
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.plum,
+              backgroundColor: AppColors.hotPink,
               minimumSize: const Size.fromHeight(46),
             ),
             child: const Text('Open delivery'),

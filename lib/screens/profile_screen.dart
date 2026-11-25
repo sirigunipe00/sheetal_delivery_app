@@ -16,7 +16,7 @@ class ProfileScreen extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 36,
-          backgroundColor: AppColors.plum,
+          backgroundColor: AppColors.hotPink,
           backgroundImage: profile?.profilePhotoUrl == null
               ? null
               : NetworkImage(profile!.profilePhotoUrl!),

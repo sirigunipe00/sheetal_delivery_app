@@ -16,7 +16,10 @@ class HistoryScreen extends StatelessWidget {
         Container(
           width: double.infinity,
           padding: EdgeInsets.fromLTRB(20, MediaQuery.paddingOf(context).top + 18, 20, 20),
-          color: AppColors.plum,
+          decoration: const BoxDecoration(
+            gradient: AppColors.headerGradient,
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

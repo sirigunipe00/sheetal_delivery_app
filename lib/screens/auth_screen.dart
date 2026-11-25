@@ -55,10 +55,10 @@ class _AuthScreenState extends State<AuthScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
             children: [
-              const Icon(Icons.two_wheeler, color: AppColors.primary, size: 48),
+              const Icon(Icons.two_wheeler, color: AppColors.hotPink, size: 48),
               const SizedBox(height: 12),
               const Text(
-                'Sheetal Partner',
+                'Sheetal Delivery Partner',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
@@ -95,7 +95,7 @@ class _AuthScreenState extends State<AuthScreen> {
               FilledButton(
                 onPressed: session.busy ? null : _login,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.hotPink,
                   minimumSize: const Size.fromHeight(54),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),

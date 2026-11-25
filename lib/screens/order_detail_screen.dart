@@ -96,8 +96,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.page,
       appBar: AppBar(
-        backgroundColor: AppColors.plum,
-        foregroundColor: Colors.white,
         title: Text('#${order.orderNumber}'),
       ),
       body: ListView(
@@ -150,7 +148,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           : ExternalLinks.navigate(order),
                       'Could not open maps.',
                     ),
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.purple),
+                    style: FilledButton.styleFrom(backgroundColor: AppColors.hotPink),
                     icon: const Icon(Icons.navigation),
                     label: Text(pickupPhase ? 'Navigate to store' : 'Navigate'),
                   ),
@@ -216,7 +214,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       () => ExternalLinks.navigate(order),
                       'Could not open maps.',
                     ),
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.purple),
+                    style: FilledButton.styleFrom(backgroundColor: AppColors.hotPink),
                     icon: const Icon(Icons.navigation),
                     label: const Text('Navigate'),
                   ),
