@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sheetal_driver_app/core/app_colors.dart';
 import 'package:sheetal_driver_app/core/format.dart';
-import 'package:sheetal_driver_app/screens/register_wizard_screen.dart';
+import 'package:sheetal_driver_app/screens/register_screen.dart';
 import 'package:sheetal_driver_app/state/driver_scope.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -67,7 +67,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Log in after registration. New partners must complete OTP + documents and wait for admin approval before going online.',
+                'Log in with the email and password you used to register. New partners can create an account with name, email, password, and mobile number.',
                 style: TextStyle(color: AppColors.muted, fontSize: 15, height: 1.35),
               ),
               const SizedBox(height: 28),
@@ -111,7 +111,7 @@ class _AuthScreenState extends State<AuthScreen> {
               OutlinedButton(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RegisterWizardScreen()),
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
                   );
                 },
                 style: OutlinedButton.styleFrom(

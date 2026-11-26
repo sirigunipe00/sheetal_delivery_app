@@ -110,22 +110,24 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  /// Full 3-step partner registration → pending admin review.
+  /// Simple partner signup: name, email, password, mobile.
+  /// OTP, documents, and admin review are skipped until an SMS provider exists.
   Future<void> registerPartner(DriverRegistrationDraft draft) async {
     busy = true;
     error = null;
     notifyListeners();
     try {
-      if (!draft.phoneVerified) {
-        throw Exception('Verify your mobile number with OTP first.');
+      final authEmail = draft.email.trim();
+      final phone = draft.phone.replaceAll(RegExp(r'[^0-9]'), '');
+      if (authEmail.isEmpty || !authEmail.contains('@')) {
+        throw Exception('Enter a valid email.');
       }
-      if (!draft.termsAccepted) {
-        throw Exception('Accept Terms & Conditions to continue.');
+      if (phone.length < 10) {
+        throw Exception('Enter a valid 10-digit mobile number.');
       }
-
-      final authEmail = draft.email.trim().isEmpty
-          ? '${draft.phone.trim()}@partners.sheetal.app'
-          : draft.email.trim();
+      if (draft.password.length < 6) {
+        throw Exception('Password must be at least 6 characters.');
+      }
 
       final response = await _db.auth.signUp(
         email: authEmail,
@@ -133,77 +135,27 @@ class DriverSession extends ChangeNotifier with WidgetsBindingObserver {
         data: {
           'role': 'driver',
           'full_name': draft.fullName.trim(),
-          'phone': draft.phone.trim(),
-          'vehicle_number': draft.vehicleNumber.trim(),
+          'phone': phone,
         },
       );
       final user = response.user;
       if (user == null) throw Exception('Could not create the account.');
       if (response.session == null) {
         throw Exception(
-          'Account created. Confirm the email if required, then log in to finish document upload / review status.',
+          'Account created. Confirm the email if required, then log in.',
         );
       }
       userId = user.id;
 
-      String? photoUrl;
-      if (draft.profilePhotoPath != null) {
-        photoUrl = await _repo.uploadDocument(
-          driverId: user.id,
-          docType: 'profile_photo',
-          localPath: draft.profilePhotoPath!,
-        );
-      }
-      if (draft.licencePhotoPath == null || draft.rcPhotoPath == null) {
-        throw Exception('Driving Licence and RC photos are required.');
-      }
-      await _repo.uploadDocument(
-        driverId: user.id,
-        docType: 'driving_licence',
-        localPath: draft.licencePhotoPath!,
-      );
-      await _repo.uploadDocument(
-        driverId: user.id,
-        docType: 'rc',
-        localPath: draft.rcPhotoPath!,
-      );
-      if (draft.insurancePhotoPath != null) {
-        await _repo.uploadDocument(
-          driverId: user.id,
-          docType: 'insurance',
-          localPath: draft.insurancePhotoPath!,
-        );
-      }
-
-      await _repo.upsertProfile(
+      profile = await _repo.upsertProfile(
         id: user.id,
         fullName: draft.fullName.trim(),
-        phone: draft.phone.trim(),
+        phone: phone,
         email: authEmail,
-        vehicleNumber: draft.vehicleNumber.trim().toUpperCase(),
-        vehicleType: draft.vehicleType,
-        licenceNumber: draft.licenceNumber.trim().toUpperCase(),
-        address: draft.address.trim(),
-        emergencyContact: draft.emergencyContact.trim(),
+        vehicleNumber: '',
         phoneVerified: true,
-        verificationStatus: 'draft',
-        profilePhotoUrl: photoUrl,
+        verificationStatus: 'approved',
       );
-      await _repo.saveVehicle(
-        driverId: user.id,
-        vehicleType: draft.vehicleType,
-        registrationNumber: draft.vehicleNumber.trim().toUpperCase(),
-        licenceNumber: draft.licenceNumber.trim().toUpperCase(),
-      );
-      await _repo.savePayout(
-        driverId: user.id,
-        upiId: draft.upiId,
-        accountHolder: draft.accountHolder,
-        accountNumber: draft.accountNumber,
-        ifsc: draft.ifsc,
-      );
-
-      profile = await _repo.submitForReview(user.id);
       unawaited(PushService.instance.syncToken(user.id));
     } catch (failure) {
       error = explainError(failure);
